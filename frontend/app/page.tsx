@@ -1,13 +1,39 @@
 "use client";
 
 import Form from "next/form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type SubmissionState = "idle" | "submitting" | "success" | "error";
 
 export default function Home() {
   const [title, setTitle] = useState<string>("");
   const [submitting, setSubmitting] = useState<SubmissionState>("idle");
+  const [entries, setEntries] = useState<
+    Array<{ id: number; title: string; created_at: string }>
+  >([]);
+
+  async function fetchEntries() {
+    try {
+      const response = await fetch("/api/entries");
+      const data = await response.json();
+      setEntries(data);
+    } catch (error) {
+      console.error("Failed to fetch entries:", error);
+    }
+  }
+
+  useEffect(() => {
+    if (submitting === "success") {
+      const timer = setTimeout(() => {
+        setSubmitting("idle");
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitting]);
+
+  useEffect(() => {
+    fetchEntries();
+  }, []);
 
   function delay(ms: number | undefined) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -19,14 +45,21 @@ export default function Home() {
 
     try {
       setSubmitting("submitting");
-      await delay(1000);
+      const response = await fetch("/api/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
 
-      setSubmitting("success");
+      if (!response.ok) {
+        setSubmitting("error");
+        return;
+      }
+
+      const newEntry = await response.json();
+      setEntries([newEntry, ...entries]); // Add new entry to top of list
       setTitle("");
-      await delay(2000);
-
-      setSubmitting("idle");
-      await delay(1500);
+      setSubmitting("success");
     } catch (error) {
       console.error("An error occurred:", error);
     }
@@ -68,6 +101,28 @@ export default function Home() {
               }[submitting] ?? null}
             </p>
           </Form>
+        </div>
+        <div className="w-full mt-8">
+          <h2 className="text-lg font-semibold mb-4">Recent Entries</h2>
+          {entries.length === 0 ? (
+            <p className="text-zinc-500">
+              No entries yet. Start tracking your work!
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {entries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-lg"
+                >
+                  <p className="font-medium">{entry.title}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {new Date(entry.created_at).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>

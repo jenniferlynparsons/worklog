@@ -84,8 +84,8 @@ All the essential patterns without drowning in complexity.
 - What does "usable for yourself" actually mean? (What's the minimum UI you need?)
 
 **Build:**
-- [ ] Set up Next.js project
-- [ ] Build the basic UI for logging an entry
+- [x] Set up Next.js project
+- [x] Build the basic UI for logging an entry
 - [ ] Mock the backend with local data
 - [ ] Make it actually usable for yourself
 - [ ] **Reflection**: What state management approach did you choose and why?
